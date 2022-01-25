@@ -1,0 +1,34 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug executable 'wss11'",
+      "cargo": {
+        "args": [
+          "build",
+          // "--lib",
+          "--bin=wssclient",
+          "--package=server"
+        ],
+        "filter": {
+          "name": "wssclient",
+          "kind": "bin"
+        }
+      },
+      "args": ["--url", "https://localhost/"],
+      "cwd": "${workspaceFolder}",
+      // "cwd": "${workspaceRoot}/target/debug/",
+      "stopOnEntry": false,
+      "sourceLanguages": ["rust"],
+      // "program": "${cargo:program}",
+      "env": {
+        "CLIENT_HOST": "http://localhost:8088"
+      }
+    }
+  ]
+}
