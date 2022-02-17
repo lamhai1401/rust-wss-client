@@ -3,7 +3,7 @@ use url::Url;
 use futures_util::{SinkExt, StreamExt};
 use std::net::TcpStream;
 use tokio::io::AsyncWriteExt;
-use tokio_tungstenite::connect_async;
+use tokio_tungstenite::{connect_async, tungstenite::Message};
 
 mod err;
 use self::err::Error;
@@ -35,6 +35,14 @@ impl WssClient {
         println!("WebSocket handshake has been successfully completed");
 
         let (mut writer, mut reader) = socket.split();
+
+        let msg = Message::Text(r#"["123", "event", "data", "temp"]"#.into());
+        writer.send(msg).await.unwrap();
+
+        loop {
+            let msg = reader.next().await.unwrap();
+            println!("Received: {:?}", msg);
+        }
 
         Ok("Wss Connected".to_string())
     }
