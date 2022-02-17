@@ -41,7 +41,10 @@ impl WssClient {
 
         loop {
             let msg = reader.next().await.unwrap();
-            println!("Received: {:?}", msg);
+            match msg {
+                Ok(msg) => println!("Received: {}", msg),
+                _ => {}
+            }
         }
 
         Ok("Wss Connected".to_string())
