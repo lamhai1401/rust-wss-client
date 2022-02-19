@@ -1,8 +1,9 @@
 use url::Url;
 
 use futures_util::{SinkExt, StreamExt};
-use std::net::TcpStream;
-use tokio::io::AsyncWriteExt;
+// use std::net::TcpStream;
+use tokio::io::{AsyncWriteExt, BufReader};
+use tokio::sync::broadcast;
 use tokio_tungstenite::{connect_async, tungstenite::Message};
 
 mod err;
@@ -13,6 +14,7 @@ use self::err::Error;
 // WssClient handle wss client connect
 pub struct WssClient {
     url: String,
+    // writer: Box<dyn StreamExt>,
 }
 
 impl WssClient {
@@ -29,24 +31,50 @@ impl WssClient {
 
     // connect connect wss
     pub async fn connect(&mut self) -> Result<String, Error> {
-        let (mut socket, _) =
+        let (socket, _) =
             connect_async(Url::parse(self.url.as_str()).expect("Can't connect to case count URL"))
                 .await?;
         println!("WebSocket handshake has been successfully completed");
 
         let (mut writer, mut reader) = socket.split();
 
+        let (tx, _rx) = broadcast::channel::<String>(100);
+
+        let tx = tx.clone();
+        let mut rx = tx.subscribe();
+
         let msg = Message::Text(r#"["123", "event", "data", "temp"]"#.into());
         writer.send(msg).await.unwrap();
 
-        loop {
-            let msg = reader.next().await.unwrap();
-            match msg {
-                Ok(msg) => println!("Received: {}", msg),
-                _ => {}
-            }
-        }
+        tokio::spawn(async move {
+            loop {
+                // tokio::select! {
+                //     result = reader.next().await => {
+                //         if result.unwrap() == 0 {
+                //             break;
+                //         }
 
+                //         tx.send(msg.to_string()).unwrap();
+                //     };
+
+                //     recv = rx.recv().await => {
+                //         let msg = recv.unwrap();
+                //         println!("Received: {}", recv);
+                //     };
+                // };
+                let msg = reader.next().await.unwrap();
+                match msg {
+                    Ok(msg) => {
+                        tx.send(msg.to_string()).unwrap();
+                        let recv = rx.recv().await.unwrap();
+                        println!("Received: {}", recv);
+                    }
+                    _ => {}
+                }
+            }
+        })
+        .await
+        .unwrap();
         Ok("Wss Connected".to_string())
     }
 }

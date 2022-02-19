@@ -1,5 +1,6 @@
 use futures_util::{SinkExt, StreamExt};
 use log::*;
+use std::{thread, time::Duration};
 use tokio::io::{AsyncWriteExt, Result};
 use tokio_tungstenite::{connect_async, tungstenite::protocol::Message};
 use url::Url;
@@ -46,12 +47,17 @@ async fn main() -> Result<()> {
     // let url = "".to_string();
     let mut client = WssClient::new("".to_string());
 
-    match client.connect().await {
-        Ok(result) => println!("{}", result),
-        Err(err) => {
-            panic!("{}", err)
-        }
-    };
+    tokio::spawn(async move {
+        match client.connect().await {
+            Ok(result) => println!("{}", result),
+            Err(err) => {
+                panic!("{}", err)
+            }
+        };
+    });
 
+    // let mut buffer = [0u8; 1024];
+
+    thread::sleep(Duration::from_millis(4000));
     Ok(())
 }
