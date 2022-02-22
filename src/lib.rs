@@ -62,20 +62,22 @@ impl WssClient {
                 //         println!("Received: {}", recv);
                 //     };
                 // };
-                let msg = reader.next().await.unwrap();
-                match msg {
+                match reader.next().await.unwrap() {
                     Ok(msg) => {
                         tx.send(msg.to_string()).unwrap();
                         let recv = rx.recv().await.unwrap();
                         println!("Received: {}", recv);
                     }
-                    _ => {}
+                    _ => {
+                        println!("Ending socket reader");
+                        return;
+                    }
                 }
             }
         })
         .await
         .unwrap();
-        Ok("Wss Connected".to_string())
+        Ok("Wss Disconnected".to_string())
     }
 }
 
