@@ -1,8 +1,8 @@
 use url::Url;
 
 use futures_util::{SinkExt, StreamExt};
-// use std::net::TcpStream;
 use tokio::io::{AsyncWriteExt, BufReader};
+// use tokio::net::TcpStream;
 use tokio::sync::broadcast;
 use tokio_tungstenite::{connect_async, tungstenite::Message};
 
@@ -14,7 +14,6 @@ use self::err::Error;
 // WssClient handle wss client connect
 pub struct WssClient {
     url: String,
-    // writer: Box<dyn StreamExt>,
 }
 
 impl WssClient {
@@ -63,11 +62,21 @@ impl WssClient {
                 //     };
                 // };
                 match reader.next().await.unwrap() {
-                    Ok(msg) => {
-                        tx.send(msg.to_string()).unwrap();
-                        let recv = rx.recv().await.unwrap();
-                        println!("Received: {}", recv);
-                    }
+                    Ok(msg) => match msg {
+                        Message::Binary(x) => println!("Got binary {:?}", x),
+                        Message::Ping(x) => println!("Ping {:?}", x),
+                        Message::Pong(x) => println!("Pong {:?}", x),
+                        Message::Close(_) => {
+                            println!("Wss client was closed");
+                            return;
+                        }
+                        Message::Text(x) => {
+                            tx.send(x.to_string()).unwrap();
+                            let recv = rx.recv().await.unwrap();
+                            println!("Received: {}", recv);
+                        }
+                        _ => {}
+                    },
                     _ => {
                         println!("Ending socket reader");
                         return;
