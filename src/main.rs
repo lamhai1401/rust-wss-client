@@ -51,13 +51,13 @@ async fn main() -> Result<()> {
         match client.connect().await {
             Ok(result) => println!("{}", result),
             Err(err) => {
-                panic!("{}", err)
+                println!("connection err: {}", err);
+                return;
             }
         };
+        client.run().await;
     });
 
-    // let mut buffer = [0u8; 1024];
-
-    thread::sleep(Duration::from_millis(4000));
+    thread::sleep(Duration::from_millis(40000));
     Ok(())
 }
